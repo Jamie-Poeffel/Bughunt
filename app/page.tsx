@@ -24,6 +24,20 @@ const statusLabel: Record<string, string> = {
   Closed: "Geschlossen",
 };
 
+const priorityLabel: Record<string, string> = {
+  Critical: "Kritisch",
+  High: "Hoch",
+  Medium: "Mittel",
+  Low: "Niedrig",
+};
+
+const priorityVariant: Record<string, "danger" | "warning" | "default" | "secondary"> = {
+  Critical: "danger",
+  High: "warning",
+  Medium: "default",
+  Low: "secondary",
+};
+
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -34,28 +48,46 @@ export default function Dashboard() {
 
   useEffect(() => {
     let active = true;
+
     async function load() {
       if (!supabase) {
         setError("Die Datenbank ist noch nicht verbunden. Hinterlege die Supabase-Umgebungsvariablen in Vercel.");
         setLoading(false);
         return;
       }
-      const [projectResult, reportResult] = await Promise.all([
-        supabase.from("projects").select("id,name,slug,description").order("name"),
-        supabase.from("reports").select("id,report_number,title,status,priority,created_at,projects(name,slug)").order("created_at", { ascending: false }).limit(100),
-      ]);
-      if (!active) return;
-      if (projectResult.error) setError("Projekte konnten nicht geladen werden: " + projectResult.error.message);
-      else setProjects(projectResult.data ?? []);
-      if (reportResult.error) {
-        setError("Meldungen sind noch nicht lesbar. Richte zuerst Login und Workspace-Berechtigungen ein, damit private Bug-Reports geschützt bleiben.");
-      } else {
-        setReports((reportResult.data ?? []) as unknown as Report[]);
+
+      try {
+        const [projectResult, reportResult] = await Promise.all([
+          supabase.from("projects").select("id,name,slug,description").order("name"),
+          supabase.from("reports").select("id,report_number,title,status,priority,created_at,projects(name,slug)").order("created_at", { ascending: false }).limit(100),
+        ]);
+
+        if (!active) return;
+
+        if (projectResult.error) {
+          setError("Projekte konnten nicht geladen werden: " + projectResult.error.message);
+        } else {
+          setProjects(projectResult.data ?? []);
+        }
+
+        if (reportResult.error) {
+          setError("Meldungen konnten nicht geladen werden. Prüfe die Supabase-Berechtigungen für den Workspace.");
+        } else {
+          setReports((reportResult.data ?? []) as unknown as Report[]);
+        }
+      } catch {
+        if (active) {
+          setError("Die Verbindung zur Datenbank ist fehlgeschlagen. Bitte prüfe deine Verbindung und lade die Seite erneut.");
+        }
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
     }
-    load();
-    return () => { active = false; };
+
+    void load();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const filtered = useMemo(() => reports.filter((report) => {
@@ -84,26 +116,33 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {error && <div className="notice" role="status">{error}</div>}
+        {error && <div className="notice" role="alert">{error}</div>}
 
         <section className="jira-section" id="meldungen">
           <div className="section-heading">
             <div><h2>Meldungen</h2><p>{reports.length} Meldungen in diesem Workspace</p></div>
           </div>
           <div className="filter-row jira-filters">
-            {[["all", "Alle"], ["Open", "Offen"], ["In progress", "In Bearbeitung"], ["Resolved", "Gelöst"]].map(([value, label]) =>
+            {[
+              ["all", "Alle"],
+              ["Open", "Offen"],
+              ["In progress", "In Bearbeitung"],
+              ["Resolved", "Gelöst"],
+              ["Closed", "Geschlossen"],
+            ].map(([value, label]) => (
               <Button key={value} variant={status === value ? "secondary" : "ghost"} size="sm" className={`filter-chip ${status === value ? "selected" : ""}`} onClick={() => setStatus(value)}>{label}</Button>
-            )}
+            ))}
           </div>
           <div className="jira-table-wrap">
             <table className="bug-table jira-table">
-              <thead><tr><th>Zusammenfassung</th><th>Projekt</th><th>Status</th><th>Erstellt</th></tr></thead>
+              <thead><tr><th>Zusammenfassung</th><th>Projekt</th><th>Status</th><th>Priorität</th><th>Erstellt</th></tr></thead>
               <tbody>
                 {filtered.map((report) => (
                   <tr key={report.id}>
                     <td><div className="bug-id">BUG-{String(report.report_number).padStart(3, "0")}</div><div className="bug-name">{report.title}</div></td>
                     <td>{report.projects?.name ?? "–"}</td>
                     <td><Badge variant={report.status === "Resolved" || report.status === "Closed" ? "success" : report.status === "In progress" ? "default" : "warning"} className={`status ${report.status === "Resolved" || report.status === "Closed" ? "resolved" : report.status === "In progress" ? "progress" : "open"}`}>{statusLabel[report.status] ?? report.status}</Badge></td>
+                    <td><Badge variant={priorityVariant[report.priority] ?? "secondary"} className="priority">{priorityLabel[report.priority] ?? report.priority}</Badge></td>
                     <td>{new Date(report.created_at).toLocaleDateString("de-CH")}</td>
                   </tr>
                 ))}

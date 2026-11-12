@@ -47,4 +47,4 @@
 .jira-project small{display:block;font-size:10px;color:#626f86;margin-top:4px}
 .project-arrow{margin-left:auto;color:#626f86}
 .project-empty{border:1px dashed #b3bac5;padding:20px;color:#626f86;font-size:12px;border-radius:5px}
-@media(max-width:700px){.jira-sidebar{display:none}.jira-main{padding:22px 14px}.jira-header{align-items:flex-start;gap:12px}.jira-header .search{display:none}.jira-table th:nth-child(4),.jira-table td:nth-child(4){display:none}}
+@media(max-width:700px){.jira-sidebar{display:none}.jira-main{padding:22px 14px}.jira-header{align-items:flex-start;gap:12px}.jira-header .search{display:none}.jira-table th:nth-child(5),.jira-table td:nth-child(5){display:none}}
