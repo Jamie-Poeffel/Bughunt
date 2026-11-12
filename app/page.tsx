@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 type Project = { id: string; name: string; slug: string; description: string | null };
 type Report = {
@@ -76,8 +79,8 @@ export default function Dashboard() {
         <header className="jira-header">
           <div><div className="eyebrow">WORKSPACE</div><h1 className="page-title">Übersicht</h1></div>
           <div className="top-actions">
-            <input className="search" aria-label="Meldungen suchen" placeholder="Suchen…" value={query} onChange={(event) => setQuery(event.target.value)} />
-            <a className="button-primary" href={projects[0] ? `/projects/${projects[0].slug}/report` : "#projekte"}>＋ Bug melden</a>
+            <Input className="search" aria-label="Meldungen suchen" placeholder="Suchen…" value={query} onChange={(event) => setQuery(event.target.value)} />
+            <Button asChild><a className="button-primary" href={projects[0] ? `/projects/${projects[0].slug}/report` : "#projekte"}>＋ Bug melden</a></Button>
           </div>
         </header>
 
@@ -89,7 +92,7 @@ export default function Dashboard() {
           </div>
           <div className="filter-row jira-filters">
             {[["all", "Alle"], ["Open", "Offen"], ["In progress", "In Bearbeitung"], ["Resolved", "Gelöst"]].map(([value, label]) =>
-              <button key={value} className={`filter-chip ${status === value ? "selected" : ""}`} onClick={() => setStatus(value)}>{label}</button>
+              <Button key={value} variant={status === value ? "secondary" : "ghost"} size="sm" className={`filter-chip ${status === value ? "selected" : ""}`} onClick={() => setStatus(value)}>{label}</Button>
             )}
           </div>
           <div className="jira-table-wrap">
@@ -100,7 +103,7 @@ export default function Dashboard() {
                   <tr key={report.id}>
                     <td><div className="bug-id">BUG-{String(report.report_number).padStart(3, "0")}</div><div className="bug-name">{report.title}</div></td>
                     <td>{report.projects?.name ?? "–"}</td>
-                    <td><span className={`status ${report.status === "Resolved" || report.status === "Closed" ? "resolved" : report.status === "In progress" ? "progress" : "open"}`}>{statusLabel[report.status] ?? report.status}</span></td>
+                    <td><Badge variant={report.status === "Resolved" || report.status === "Closed" ? "success" : report.status === "In progress" ? "default" : "warning"} className={`status ${report.status === "Resolved" || report.status === "Closed" ? "resolved" : report.status === "In progress" ? "progress" : "open"}`}>{statusLabel[report.status] ?? report.status}</Badge></td>
                     <td>{new Date(report.created_at).toLocaleDateString("de-CH")}</td>
                   </tr>
                 ))}
