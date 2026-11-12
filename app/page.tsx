@@ -15,10 +15,10 @@ type Report = {
 };
 
 const statusLabel: Record<string, string> = {
-  open: "Offen",
-  in_progress: "In Bearbeitung",
-  resolved: "Gelöst",
-  closed: "Geschlossen",
+  Open: "Offen",
+  "In progress": "In Bearbeitung",
+  Resolved: "Gelöst",
+  Closed: "Geschlossen",
 };
 
 export default function Dashboard() {
@@ -88,7 +88,7 @@ export default function Dashboard() {
             <div><h2>Meldungen</h2><p>{reports.length} Meldungen in diesem Workspace</p></div>
           </div>
           <div className="filter-row jira-filters">
-            {[["all", "Alle"], ["open", "Offen"], ["in_progress", "In Bearbeitung"], ["resolved", "Gelöst"]].map(([value, label]) =>
+            {[["all", "Alle"], ["Open", "Offen"], ["In progress", "In Bearbeitung"], ["Resolved", "Gelöst"]].map(([value, label]) =>
               <button key={value} className={`filter-chip ${status === value ? "selected" : ""}`} onClick={() => setStatus(value)}>{label}</button>
             )}
           </div>
@@ -100,7 +100,7 @@ export default function Dashboard() {
                   <tr key={report.id}>
                     <td><div className="bug-id">BUG-{String(report.report_number).padStart(3, "0")}</div><div className="bug-name">{report.title}</div></td>
                     <td>{report.projects?.name ?? "–"}</td>
-                    <td><span className={`status ${report.status === "resolved" || report.status === "closed" ? "resolved" : report.status === "in_progress" ? "progress" : "open"}`}>{statusLabel[report.status] ?? report.status}</span></td>
+                    <td><span className={`status ${report.status === "Resolved" || report.status === "Closed" ? "resolved" : report.status === "In progress" ? "progress" : "open"}`}>{statusLabel[report.status] ?? report.status}</span></td>
                     <td>{new Date(report.created_at).toLocaleDateString("de-CH")}</td>
                   </tr>
                 ))}
